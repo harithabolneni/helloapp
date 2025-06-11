@@ -1,0 +1,8 @@
+yfinance
+pandas
+pandas_ta
+matplotlib
+Pillow
+requests
+setuptools
+numpy<2.0
