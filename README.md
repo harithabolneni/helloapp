@@ -104,10 +104,10 @@ Ensure these are installed, typically via:
 
 ### Usage for `supertrend_analyzer.py`
 
-Run the script from the command line. You can specify the ticker symbol, historical data period, ATR length for Supertrend, and the Supertrend multiplier.
+Run the script from the command line. You can specify the ticker symbol, historical data period, ATR length for Supertrend, the Supertrend multiplier, and the data interval.
 
 ```bash
-python supertrend_analyzer.py [--ticker TICKER] [--period PERIOD] [--atr_length LENGTH] [--multiplier MULTIPLIER]
+python supertrend_analyzer.py [--ticker TICKER] [--period PERIOD] [--atr_length LENGTH] [--multiplier MULTIPLIER] [--interval INTERVAL]
 ```
 
 **Command-Line Arguments:**
@@ -116,30 +116,37 @@ python supertrend_analyzer.py [--ticker TICKER] [--period PERIOD] [--atr_length 
 *   `--period`: Period for historical data (e.g., '1mo', '6mo', '1y', '5y', 'max'). Default: `1y`.
 *   `--atr_length`: ATR period length for Supertrend calculation. Default: `10`.
 *   `--multiplier`: Multiplier for the ATR to calculate Supertrend bands. Default: `3.0`.
+*   `--interval`: Data interval for analysis ('daily' or 'weekly'). Default: `daily`.
 
 **Examples:**
 
-*   Run with default parameters (MSFT, 1 year, ATR 10, Multiplier 3):
+*   Run with default parameters (MSFT, 1 year, Daily, ATR 10, Multiplier 3):
     ```bash
     python supertrend_analyzer.py
     ```
 
-*   Run for Apple (AAPL) for the last 2 years, with ATR length 7 and multiplier 2.5:
+*   Run for Apple (AAPL) for the last 2 years, with ATR length 7 and multiplier 2.5 (daily interval by default):
     ```bash
     python supertrend_analyzer.py --ticker AAPL --period 2y --atr_length 7 --multiplier 2.5
+    ```
+
+*   Run for Google (GOOG) for the last 5 years on a weekly interval:
+    ```bash
+    python supertrend_analyzer.py --ticker GOOG --period 5y --interval weekly --atr_length 10 --multiplier 3.0
     ```
 
 **Output:**
 
 1.  **Console Output**: The script will print:
-    *   Details of the ticker and parameters being used.
+    *   Details of the ticker and parameters being used (including interval).
     *   A list of "Buy Flip Dates".
     *   A list of "Sell Flip Dates".
     *   A summary of "Trend Segments" (bullish/bearish with start and end dates).
-2.  **Plot File**: A PNG image file will be saved in the script's directory, named according to the ticker and parameters (e.g., `MSFT_supertrend_P1y_ATR10_M3.0_plot.png`). This plot shows:
+2.  **Plot File**: A PNG image file will be saved in the script's directory, named according to the ticker, interval, and parameters (e.g., `MSFT_supertrend_daily_P1y_ATR10_M3.0_plot.png`). This plot shows:
     *   The stock's closing prices.
     *   The Supertrend indicator line.
     *   Buy signals (green upward arrows) and Sell signals (red downward arrows) at flip points.
+    *   The plot title will also indicate the data interval (Daily/Weekly).
 
 ### Interpreting the Supertrend Output
 
@@ -148,5 +155,6 @@ python supertrend_analyzer.py [--ticker TICKER] [--period PERIOD] [--atr_length 
     *   A "Buy Flip" occurs when the trend changes from bearish to bullish.
     *   A "Sell Flip" occurs when the trend changes from bullish to bearish.
 *   **Trend Segments**: These show the duration of continuous bullish or bearish periods as identified by the indicator.
+*   **Timeframe Consideration**: When using the `--interval weekly` option, the trends and flip signals will be based on weekly price movements, resulting in broader, longer-term trend indications compared to daily analysis.
 
 **Disclaimer**: Technical analysis tools like Supertrend provide insights but do not guarantee future performance. Use this information as part of a broader investment strategy.
