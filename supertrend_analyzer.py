@@ -4,21 +4,47 @@ import pandas_ta as ta # Attempt to import pandas_ta
 import matplotlib.pyplot as plt
 import argparse
 
-def analyze_stock_supertrend(ticker_symbol="MSFT", period="1y", atr_length=10, st_multiplier=3.0):
+def analyze_stock_supertrend(ticker_symbol="MSFT", period="1y", atr_length=10, st_multiplier=3.0, interval="daily"):
     """
     Fetches historical stock data, calculates the Supertrend indicator,
     and prints the head and tail of the DataFrame with the indicator.
+    Can resample data to weekly interval.
     """
     try:
-        print(f"Fetching historical data for {ticker_symbol} for period {period}...")
+        print(f"Fetching historical data for {ticker_symbol} for period {period} (interval: {interval})...")
         ticker_data = yf.Ticker(ticker_symbol)
-        df = ticker_data.history(period=period)
+        df = ticker_data.history(period=period) # Daily data is fetched first
 
         if df.empty:
             print(f"No data found for {ticker_symbol} for the period {period}.")
             return
 
-        print(f"Successfully fetched {len(df)} data points.")
+        print(f"Successfully fetched {len(df)} daily data points.")
+
+        if interval == 'weekly':
+            print(f"Resampling data to weekly interval...")
+            # Ensure 'Volume' column exists for resampling; yfinance might use 'Volume' or 'volume'
+            # Standardize to 'Volume' if 'volume' is present
+            if 'volume' in df.columns and 'Volume' not in df.columns:
+                df.rename(columns={'volume': 'Volume'}, inplace=True)
+
+            # Check for Volume column for resampling
+            # ATR calculation by pandas_ta typically uses High, Low, Close.
+            # Volume is good practice for OHLCV resampling but might not be strictly needed for SuperTrend's ATR if pandas_ta's ATR does not use it.
+            # If 'Volume' is missing, we proceed but print a warning.
+            # Alternatively, one could create a dummy 'Volume' column: df['Volume'] = 0 if 'Volume' not in df.columns else None
+            if 'Volume' not in df.columns:
+                 print("Warning: 'Volume' column not found. Weekly resampling of volume will be skipped. ATR calculation might be okay if it only uses HLC.")
+                 agg_dict = {'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last'}
+            else:
+                 agg_dict = {'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'}
+
+            df = df.resample('W').agg(agg_dict).dropna() # Drop weeks with no trading data
+
+            if df.empty:
+                print(f"No data left after resampling to weekly for {ticker_symbol} for the period {period}.")
+                return
+            print(f"Resampled to {len(df)} weekly data points.")
 
         # Ensure columns are in the correct case if necessary (usually yfinance is fine)
         # df.rename(columns={"High": "high", "Low": "low", "Close": "close"}, inplace=True) # Example if renaming needed
@@ -148,7 +174,7 @@ def analyze_stock_supertrend(ticker_symbol="MSFT", period="1y", atr_length=10, s
                 plt.scatter(valid_sell_flip_dates, df_analysis.loc[valid_sell_flip_dates, 'High'] * 1.02,
                             label='Sell Signal', marker='v', color='red', s=100, zorder=5)
 
-            plt.title(f'{ticker_symbol} Supertrend Analysis ({atr_length}, {st_multiplier})')
+            plt.title(f'{ticker_symbol} {interval.capitalize()} Supertrend Analysis (ATR: {atr_length}, Mult: {st_multiplier})')
             plt.xlabel('Date')
             plt.ylabel('Price')
             plt.legend()
@@ -157,7 +183,7 @@ def analyze_stock_supertrend(ticker_symbol="MSFT", period="1y", atr_length=10, s
             # Attempt to save instead of show for headless environments
             # Sanitize period string for filename
             safe_period_str = period.replace(" ", "").replace("'", "")
-            plot_filename = f"{ticker_symbol}_supertrend_P{safe_period_str}_ATR{atr_length}_M{st_multiplier}_plot.png"
+            plot_filename = f"{ticker_symbol}_supertrend_{interval}_P{safe_period_str}_ATR{atr_length}_M{st_multiplier}_plot.png"
             plt.savefig(plot_filename)
             print(f"Plot saved to {plot_filename}")
             plt.close() # Close the figure to free memory
@@ -203,6 +229,13 @@ if __name__ == "__main__":
         default=3.0,
         help="Multiplier for Supertrend."
     )
+    parser.add_argument(
+        "--interval",
+        type=str,
+        default="daily",
+        choices=['daily', 'weekly'],
+        help="Data interval for analysis ('daily' or 'weekly'). Default: 'daily'."
+    )
 
     args = parser.parse_args()
 
@@ -210,5 +243,6 @@ if __name__ == "__main__":
         ticker_symbol=args.ticker.upper(),
         period=args.period,
         atr_length=args.atr_length,
-        st_multiplier=args.multiplier
+        st_multiplier=args.multiplier,
+        interval=args.interval
     )
