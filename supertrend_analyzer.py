@@ -132,18 +132,33 @@ def analyze_stock_supertrend(ticker_symbol="MSFT", period="1y", atr_length=10, s
             trend_segments.append({'type': current_trend_type, 'start': current_trend_start_date, 'end': df_analysis.index[-1]})
 
         print("\n--- Trend Analysis ---")
-        print(f"Analysis for {ticker_symbol} (ATR: {atr_length}, Multiplier: {st_multiplier})")
-        print("Buy Flip Dates:")
-        for date in buy_flip_dates:
-            print(f"  {date.strftime('%Y-%m-%d')}")
-
-        print("\nSell Flip Dates:")
-        for date in sell_flip_dates:
-            print(f"  {date.strftime('%Y-%m-%d')}")
+        print(f"Ticker: {ticker_symbol}, Period: {period}, Interval: {interval}, ATR: {atr_length}, Mult: {st_multiplier}")
 
         print("\nTrend Segments:")
+        print(f"{'Type':<10} | {'Start Date':<10} | {'End Date':<10}")
+        print("-" * 36) # Separator line
         for segment in trend_segments:
-            print(f"  Type: {segment['type']}, Start: {segment['start'].strftime('%Y-%m-%d')}, End: {segment['end'].strftime('%Y-%m-%d')}")
+            type_str = segment['type'].capitalize()
+            start_str = segment['start'].strftime('%Y-%m-%d')
+            end_str = segment['end'].strftime('%Y-%m-%d')
+            print(f"{type_str:<10} | {start_str:<10} | {end_str:<10}")
+
+        print("\nFlip Events:")
+        all_flips = []
+        for date in buy_flip_dates:
+            all_flips.append({'date': date, 'type': 'Buy'})
+        for date in sell_flip_dates:
+            all_flips.append({'date': date, 'type': 'Sell'})
+
+        # Sort flips by date
+        all_flips.sort(key=lambda x: x['date'])
+
+        print(f"{'Date':<10} | {'Type':<10}")
+        print("-" * 23) # Separator line
+        for flip in all_flips:
+            date_str = flip['date'].strftime('%Y-%m-%d')
+            type_str = flip['type']
+            print(f"{date_str:<10} | {type_str:<10}")
         # --- End of New Trend Analysis Logic ---
 
         print("\nGenerating plot...")
